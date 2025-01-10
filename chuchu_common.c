@@ -172,7 +172,7 @@ void print_all_players(server_data_t *s) {
 int get_chuchu_config(server_data_t *s, char *fn) {
   chuchu_info(SERVER,"Reading config...");
   FILE *file = fopen(fn,"r");
-  int lobby_port=0;
+  int lobby_port=0, login_port=0;
   int max_puzzles=0, max_clients=0, max_rooms=0,i=0;
   char lobby_ip[16], buf[1024], db_path[256], info_path[256];
   memset(buf, 0, sizeof(buf));
@@ -182,6 +182,7 @@ int get_chuchu_config(server_data_t *s, char *fn) {
   
   if (file != NULL) {
     while (fgets(buf, sizeof(buf), file) != NULL) {
+      sscanf(buf, "CHUCHU_LOGIN_PORT=%d", &login_port);
       sscanf(buf, "CHUCHU_LOBBY_PORT=%d", &lobby_port);
       sscanf(buf, "CHUCHU_LOBBY_IP=%15s", lobby_ip);
       sscanf(buf, "CHUCHU_LOBBY_DB_PATH=%s", db_path);
@@ -233,7 +234,10 @@ int get_chuchu_config(server_data_t *s, char *fn) {
   strncpy(s->chu_db_path, db_path, sizeof(db_path));
   strncpy(s->chu_info_path, info_path, sizeof(info_path));
   s->chu_lobby_port = (uint16_t)lobby_port;
-  s->chu_login_port = 9000;
+  if (login_port == 0)
+    s->chu_login_port = 9000;
+  else
+    s->chu_login_port = (uint16_t)login_port;
   s->m_rooms = max_rooms;
   s->m_pl_slots = 4;
   
@@ -391,7 +395,7 @@ uint16_t parse_chuchu_msg(char* buf, int buf_len) {
 void init_chuchu_crypt(player_t* pl) {
   int i=0;
   srand((unsigned int)time(NULL));
-  char server_seed_dc[3],client_seed_dc[3];
+  char server_seed_dc[4],client_seed_dc[4];
 
   for(i=0;i<4;i++) {
     server_seed_dc[i] = (char)(rand()%16);
