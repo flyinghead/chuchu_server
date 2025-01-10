@@ -170,7 +170,7 @@ void print_all_players(server_data_t *s) {
  *
  */
 int get_chuchu_config(server_data_t *s, char *fn) {
-  chuchu_info(SERVER,"Reading config...");
+  chuchu_info(SERVER,"Reading config %s...", fn);
   FILE *file = fopen(fn,"r");
   int lobby_port=0, login_port=0;
   int max_puzzles=0, max_clients=0, max_rooms=0,i=0;
@@ -193,7 +193,7 @@ int get_chuchu_config(server_data_t *s, char *fn) {
     }
     fclose(file);
   } else {
-    chuchu_info(SERVER,"Config file chuchu.cfg is missing in %s", fn);
+    chuchu_info(SERVER,"Config file %s is missing", fn);
     return 0;
   }
 

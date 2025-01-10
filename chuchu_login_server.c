@@ -151,7 +151,7 @@ int main(int argc , char *argv[]) {
   server_data_t s_data;
 
   //Load chuch config
-  if (!get_chuchu_config(&s_data, "chuchu.cfg"))
+  if (!get_chuchu_config(&s_data, argc >= 2 ? argv[1] : "chuchu.cfg"))
     return 0;
   
   socket_desc = socket(AF_INET , SOCK_STREAM , 0);

@@ -1073,7 +1073,7 @@ int main(int argc , char *argv[]) {
   server_data_t s_data;
 
   //Load cfg and init server_data
-  if (!get_chuchu_config(&s_data, "chuchu.cfg"))
+  if (!get_chuchu_config(&s_data, argc >= 2 ? argv[1] : "chuchu.cfg"))
     return 0;
 
   //Load puzzles from DB to array
