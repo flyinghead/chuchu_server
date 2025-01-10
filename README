@@ -1,0 +1,31 @@
+#################################################################
+ChuChu DC Server
+Author Shuouma
+2016
+#################################################################
+Description
+#################################################################
+This is the source code release of the ChuChu server.
+It is a proof-of-concept server, that is, this is not
+a production release. So take it as it is.
+
+#################################################################
+Prerequisite & Limitations
+#################################################################
+1. Libraries for sqlite3 (libsqlite3) and pthread are required for compilation
+2. It is mandatory to edit the chuchu.cfg and replace <SERVER_IP> to the public IP of your server.
+3. The code is only tested on a Little-endian (byte-order) and X86_64 architecture. Will probably not
+   work on big-endian without smaller modifications of the code.
+4. The release is for Linux
+
+#################################################################
+Compile & Run
+#################################################################
+1. make (to compile the source code)
+2. Execute the binaries chuchu_login_server and chuchu_lobby_server
+Note:
+Create your own init.d scripts for easier launch. Pipe the log to file.
+
+
+Happy Gaming
+Shuouma
