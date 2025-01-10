@@ -1,0 +1,15 @@
+[Unit]
+Description=%i lobby server
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=dcnet
+WorkingDirectory=/usr/local/chuchu
+ExecStart=/usr/local/chuchu/chuchu_lobby_server %i.cfg
+
+[Install]
+WantedBy=multi-user.target
