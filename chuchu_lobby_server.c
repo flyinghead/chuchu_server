@@ -45,13 +45,13 @@ void send_txt_to_all(server_data_t *s, char* username, int txt_flag);
  *
  */
 void init_game_rooms(server_data_t *s) {
-  int i=0,j=0;
   int max_player_slots = s->m_pl_slots;
 
   const char *r_menu[] = { "PSO Room", "Sonic Room", "Mice Room", "Cat Room", "Team Room", };
   int r_icons[] = { PSO_ICON, SONIC_ICON, MICE_ICON, MICE_ICON, DD_ICON };
   
-  for(i=0;i<5;i++) {
+  int nrooms = s->deedee_server ? 2 : 5;
+  for (int i = 0; i < nrooms; i++) {
     if (s->g_l[i] == NULL) { 
       game_room_t *gr = (game_room_t *)malloc(sizeof(game_room_t));
       strlcpy(gr->g_name, r_menu[i], strlen(r_menu[i])+1);
@@ -66,7 +66,7 @@ void init_game_rooms(server_data_t *s) {
       gr->duration = 0;
       gr->m_pl_slots = max_player_slots;
       gr->player_slots = calloc((size_t)max_player_slots, sizeof(player_t *));
-      for (j=0;j<max_player_slots;j++)
+      for (int j=0;j<max_player_slots;j++)
 	gr->player_slots[j] = NULL;
       s->g_l[i] = gr;
     }
@@ -221,6 +221,7 @@ void join_game_room(player_t *pl, game_room_t *gr) {
       chuchu_info(LOBBY_SERVER,"User %s joined room %s", pl->username, gr->g_name); 
       gr->player_slots[i] = pl;
       gr->taken_seats++;
+      discordRoomJoined(s, pl->username, gr->g_name);
       return;
     }
   }
@@ -526,15 +527,22 @@ uint16_t create_chuchu_menu_item(char *msg, int c_pkt_size, uint32_t item_id, ME
  *  returns: packet size
  *           
  */
-uint16_t create_chuchu_server_menu(char* msg) {
+uint16_t create_chuchu_server_menu(server_data_t* s, char* msg) {
   uint8_t entries = 0;
   uint16_t pkt_size = 4;
-  pkt_size = create_chuchu_menu_item(msg, pkt_size, 0x00, SERVER_MENU, SERVER_ICON, EMPTY_ICON, "ChuChu Servers"); 
-  pkt_size = create_chuchu_menu_item(msg, pkt_size, 0xdd, SERVER_MENU, MEMO_ICON, EMPTY_ICON, "Top News");
-  pkt_size = create_chuchu_menu_item(msg, pkt_size, 0xcc, SERVER_MENU, MEMO_ICON, EMPTY_ICON, "Top Ranking");
+  if (s->deedee_server) {
+    pkt_size = create_chuchu_menu_item(msg, pkt_size, 0x00, SERVER_MENU, SERVER_ICON, EMPTY_ICON, "Dee Dee Server");
+    entries = 1;
+  }
+  else {
+    pkt_size = create_chuchu_menu_item(msg, pkt_size, 0x00, SERVER_MENU, SERVER_ICON, EMPTY_ICON, "ChuChu Server");
+    pkt_size = create_chuchu_menu_item(msg, pkt_size, 0xdd, SERVER_MENU, MEMO_ICON, EMPTY_ICON, "Top News");
+    pkt_size = create_chuchu_menu_item(msg, pkt_size, 0xcc, SERVER_MENU, MEMO_ICON, EMPTY_ICON, "Top Ranking");
+    entries = 4;
+  }
   pkt_size = create_chuchu_menu_item(msg, pkt_size, 0x00, ROOM_MENU, DOOR_ICON, EMPTY_ICON, "Game Rooms");
-  pkt_size = create_chuchu_menu_item(msg, pkt_size, 0x00, PUZZLE_LAND_MENU, DOOR_ICON, EMPTY_ICON, "Puzzle Land");
-  entries = 4;
+  if (!s->deedee_server)
+    pkt_size = create_chuchu_menu_item(msg, pkt_size, 0x00, PUZZLE_LAND_MENU, DOOR_ICON, EMPTY_ICON, "Puzzle Land");
 
   //Create header
   create_chuchu_hdr(msg, 0x07, entries, pkt_size);
@@ -740,7 +748,7 @@ uint16_t create_chuchu_menu_msg(player_t *pl, uint32_t menu_id, uint32_t item_id
       return create_chuchu_info_msg(msg, s, RANKING);
     if (item_id == 0xdd)
       return create_chuchu_info_msg(msg, s, NEWS);
-    return create_chuchu_server_menu(msg);
+    return create_chuchu_server_menu(s, msg);
   case ROOM_MENU:
     if(item_id == 0xee)
       leave_game_room(pl, prev_menu_id, prev_item_id);
@@ -759,6 +767,7 @@ uint16_t create_chuchu_menu_msg(player_t *pl, uint32_t menu_id, uint32_t item_id
 	return 0;
       }
       //Start the game
+      discordGameStart(gr);
       return create_chuchu_start_game_msg(gr);
     } 
     //Else a player is joing a game room
@@ -811,7 +820,7 @@ uint16_t create_chuchu_menu_msg(player_t *pl, uint32_t menu_id, uint32_t item_id
     create_chuchu_hdr(msg, 0x13, 0x00, pkt_size);
     break;
   default:
-    pkt_size = create_chuchu_server_menu(msg);
+    pkt_size = create_chuchu_server_menu(s, msg);
     break;
   }
   

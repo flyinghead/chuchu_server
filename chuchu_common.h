@@ -77,6 +77,8 @@ typedef struct {
   char chu_lobby_ip[INET_ADDRSTRLEN];
   char chu_db_path[256];
   char chu_info_path[256];
+  char discord_webhook[256];
+  char deedee_server;
 
   //Data
   puzzle_t **puzz_l;
@@ -188,3 +190,7 @@ void print_chuchu_data(void* ds,unsigned long data_size);
 void create_chuchu_hdr(char* msg, uint8_t msg_id, uint8_t msg_flag, uint16_t msg_size);
 void send_chuchu_msg(int sock, char* msg, int msg_size);
 uint16_t parse_chuchu_msg(char* buf, int buf_len);
+
+//Discord
+void discordRoomJoined(server_data_t *server, const char *player, const char *room);
+void discordGameStart(game_room_t *gameRoom);

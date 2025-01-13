@@ -174,11 +174,14 @@ int get_chuchu_config(server_data_t *s, char *fn) {
   FILE *file = fopen(fn,"r");
   int lobby_port=0, login_port=0;
   int max_puzzles=0, max_clients=0, max_rooms=0,i=0;
+  int deedee_server = 0;
   char lobby_ip[16], buf[1024], db_path[256], info_path[256];
+  char discord_webhook[256];
   memset(buf, 0, sizeof(buf));
   memset(lobby_ip, 0, sizeof(lobby_ip));
   memset(db_path, 0, sizeof(db_path));
   memset(info_path, 0, sizeof(info_path));
+  memset(discord_webhook, 0, sizeof(discord_webhook));
   
   if (file != NULL) {
     while (fgets(buf, sizeof(buf), file) != NULL) {
@@ -190,6 +193,8 @@ int get_chuchu_config(server_data_t *s, char *fn) {
       sscanf(buf, "CHUCHU_LOBBY_MAX_PUZZLES=%d", &max_puzzles);
       sscanf(buf, "CHUCHU_LOBBY_MAX_CLIENTS=%d", &max_clients);
       sscanf(buf, "CHUCHU_LOBBY_MAX_ROOMS=%d", &max_rooms);
+      sscanf(buf, "CHUCHU_LOBBY_DEEDEE=%d", &deedee_server);
+      sscanf(buf, "CHUCHU_LOBBY_DISCORD_WEBHOOK=%s", discord_webhook);
     }
     fclose(file);
   } else {
@@ -240,8 +245,10 @@ int get_chuchu_config(server_data_t *s, char *fn) {
     s->chu_login_port = (uint16_t)login_port;
   s->m_rooms = max_rooms;
   s->m_pl_slots = 4;
+  s->deedee_server = deedee_server;
+  strncpy(s->discord_webhook, discord_webhook, sizeof(discord_webhook));
   
-  chuchu_info(SERVER,"Loaded Config:");
+  chuchu_info(SERVER,"Loaded %s Config:", deedee_server ? "Dee Dee" : "ChuChu");
   chuchu_info(SERVER,"\tCHUCHU_LOGIN_PORT_: %d", s->chu_login_port);
   chuchu_info(SERVER,"\tCHUCHU_LOBBY_IP: %s", s->chu_lobby_ip);
   chuchu_info(SERVER,"\tCHUCHU_LOBBY_PORT: %d", s->chu_lobby_port);
@@ -250,6 +257,7 @@ int get_chuchu_config(server_data_t *s, char *fn) {
   chuchu_info(SERVER,"\tCHUCHU_MAX_PUZZLES: %d", s->m_puzz);
   chuchu_info(SERVER,"\tCHUCHU_MAX_CLIENTS: %d", s->m_cli);
   chuchu_info(SERVER,"\tCHUCHU_MAX_ROOMS: %d", s->m_rooms);
+  chuchu_info(SERVER,"\tCHUCHU_DISCORD_WEBHOOK: %s", s->discord_webhook);
   //Allocate pointer arrays
   s->puzz_l = calloc((size_t)s->m_puzz, sizeof(puzzle_t *));
   for(i=0;i<(s->m_puzz);i++)
