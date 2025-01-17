@@ -96,8 +96,8 @@ static void *postWebhookThread(void *arg)
 				"\"icon_url\": \"%s\" }, "
 			  "\"title\": ",
 			  ddplanet ? "Dee Dee Planet" : "ChuChu Rocket!",
-			  ddplanet ? "https://cdn.thegamesdb.net/images/thumb/boxart/front/87694-1.jpg"
-					  : "https://cdn.thegamesdb.net/images/thumb/boxart/front/3641-2.jpg");
+			  ddplanet ? "https://dcnet.flyca.st/gamepic/ddplanet.jpg"
+					  : "https://dcnet.flyca.st/gamepic/chuchu.jpg");
 	n += writeJsonString(msg + n, notif->embedTitle);
 	n += sprintf(msg + n, ", \"description\": ");
 	n += writeJsonString(msg + n, notif->embedText);

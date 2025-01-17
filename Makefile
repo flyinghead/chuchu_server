@@ -16,7 +16,7 @@ chuchu_login_server: $(LOGIN_SRC) $(COMMON_SRC)
 chuchu_lobby_server: $(LOBBY_SRC) $(COMMON_SRC)
 	$(CC) $(CFLAGS) $(LOBBY_SRC) -o $@ $(LFLAGS)
 clean:
-	rm $(TARGET)
+	rm -f $(TARGET) *.o
 	rm -f *~
 
 install:
