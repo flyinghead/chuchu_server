@@ -54,16 +54,17 @@ sqlite3* open_chuchu_db(const char* db_path) {
  * Function: is_player_in_chuchu_db
  * --------------------
  *
- * Function that checks if a user is
- * already registrated in the DB.
+ * Function that checks if a console id or user name is
+ * already registered in the DB.
  * 
  *  *db_path: full path and filename to the DB
- *  *dc_id:   ID of the DC connecting
+ *  *name_or_dc_id:  ID of the DC connecting or User name
+ *  *name_search:  whether to search for Console ID or User name
  *
  *  returns: nr of users found
  *
  */
-int is_player_in_chuchu_db(const char* db_path, const char* dc_id) {
+int is_player_in_chuchu_db(const char* db_path, const char* name_or_dc_id, int name_search) {
   sqlite3 *db;
   int rc, count = 0;
   sqlite3_stmt *pStmt;
@@ -72,7 +73,15 @@ int is_player_in_chuchu_db(const char* db_path, const char* dc_id) {
     return -1;
   }
   
-  const char *zSql = "SELECT COUNT(*) from PLAYER_DATA WHERE DC_ID = hex(?);"; 
+  const char *zSql;
+  if (name_search) {
+    zSql = "SELECT COUNT(*) from PLAYER_DATA WHERE USERNAME = ?;";
+    count = (int)strlen(name_or_dc_id);
+  }
+  else {
+    zSql = "SELECT COUNT(*) from PLAYER_DATA WHERE DC_ID = hex(?);";
+    count = 6;
+  }
   rc = sqlite3_prepare_v2(db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE_OK ){
     chuchu_error(SERVER, "Prepare SQL error: %d", rc);
@@ -80,7 +89,7 @@ int is_player_in_chuchu_db(const char* db_path, const char* dc_id) {
     return -1;
   }
 
-  rc = sqlite3_bind_text(pStmt, 1, dc_id, 6, SQLITE_STATIC);
+  rc = sqlite3_bind_text(pStmt, 1, name_or_dc_id, count, SQLITE_STATIC);
   if (rc != SQLITE_OK) {
     sqlite3_finalize(pStmt);
     chuchu_error(SERVER, "Bind text failed error: %d", rc);
@@ -94,9 +103,9 @@ int is_player_in_chuchu_db(const char* db_path, const char* dc_id) {
   }
   
   if (count == 1)
-    chuchu_info(SERVER,"Users DC id is registered in the DB");
+    chuchu_info(SERVER,"Console ID/User '%s' is registered in the DB", name_or_dc_id);
   else
-    chuchu_info(SERVER,"DC id is not in the DB");
+    chuchu_info(SERVER,"Console ID/User '%' is not in the DB", name_or_dc_id);
 
   sqlite3_finalize(pStmt);
   sqlite3_close(db);
@@ -159,6 +168,10 @@ int is_username_taken(const char* db_path, const char* u_name) {
  *
  */
 int validate_player_login(const char* db_path, const char* u_name, const char* passwd, const char* dc_id) {
+#ifdef DISABLE_AUTH
+  chuchu_info(SERVER,"Login granted");
+  return 1;
+#else
   sqlite3 *db;
   int rc, count = 0;
   sqlite3_stmt *pStmt;
@@ -212,6 +225,7 @@ int validate_player_login(const char* db_path, const char* u_name, const char* p
   sqlite3_finalize(pStmt);
   sqlite3_close(db);
   return count;
+#endif
 }
 
 /*
@@ -662,6 +676,10 @@ int update_player_ranking_to_chuchu_db(const char* db_path, player_t* pl) {
 
   const char* u_name = pl->username;
   const char* dc_id = pl->dreamcast_id;
+#ifdef DISABLE_AUTH
+  if (!is_player_in_chuchu_db(db_path, u_name, 1))
+	  write_player_to_chuchu_db(db_path, dc_id, u_name, "");
+#endif
   /*
    Important, chuchu sends a updated stat packet after each game, so
    we need to keep the orig. values and new apart, add here and store
@@ -800,10 +818,17 @@ int read_ranking_from_chuchu_db(const char* db_path, player_t* pl) {
     pl->db_lost_rnds = (uint32_t)sqlite3_column_int(pStmt, 1);
     pl->db_total_rnds = (uint32_t)sqlite3_column_int(pStmt, 2);
   } else {
+#ifdef DISABLE_AUTH
+    chuchu_info(SERVER, "Can't find user, returning 0");
+    pl->db_won_rnds = 0;
+    pl->db_lost_rnds = 0;
+    pl->db_total_rnds = 0;
+#else
     sqlite3_finalize(pStmt);
     chuchu_error(SERVER, "Can't find user, getting %d", rc);
     sqlite3_close(db); 
     return -1;
+#endif
   }
   sqlite3_finalize(pStmt);
   sqlite3_close(db);

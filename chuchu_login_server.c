@@ -70,8 +70,13 @@ int auth_process(player_t *pl, char* msg, char* buf, AUTH_PROCESS *auth_state) {
       memcpy(dc_id, &buf[0x06], 6);
       chuchu_info(LOGIN_SERVER," <- DC-ID: [%02x%02x%02x%02x%02x%02x]",
 		  (uint8_t)dc_id[0],(uint8_t)dc_id[1],(uint8_t)dc_id[2],(uint8_t)dc_id[3],(uint8_t)dc_id[4],(uint8_t)dc_id[5]);
-      
-      rc = is_player_in_chuchu_db(s->chu_db_path, dc_id);
+
+#ifdef DISABLE_AUTH      
+      // Force login instead of registration
+      rc = 1;
+#else
+      rc = is_player_in_chuchu_db(s->chu_db_path, dc_id, 0);
+#endif
       
       if(rc == 0) {
 	chuchu_info(LOGIN_SERVER," <- New user joining...");	

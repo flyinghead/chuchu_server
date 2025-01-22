@@ -245,7 +245,7 @@ int get_chuchu_config(server_data_t *s, char *fn) {
     s->chu_login_port = (uint16_t)login_port;
   s->m_rooms = max_rooms;
   s->m_pl_slots = 4;
-  s->deedee_server = deedee_server;
+  s->deedee_server = (char)deedee_server;
   strncpy(s->discord_webhook, discord_webhook, sizeof(discord_webhook));
   
   chuchu_info(SERVER,"Loaded %s Config:", deedee_server ? "Dee Dee" : "ChuChu");

@@ -1,7 +1,7 @@
 CC = gcc
-#CFLAGS = -Wall -Wconversion -g
-CFLAGS = -Wall -O3
-LFLAGS = -lpthread -lsqlite3 -lcurl
+#CFLAGS = -DDISABLE_AUTH -Wall -Wconversion -g -fsanitize=address
+CFLAGS = -DDISABLE_AUTH -Wall -O3
+LFLAGS = -lpthread -lsqlite3 -lcurl $(CFLAGS)
 TARGET = chuchu_login_server chuchu_lobby_server
 LOGIN_SRC = chuchu_login_server.c chuchu_common.c chuchu_sql.c chuchu_msg.c
 LOBBY_SRC = chuchu_lobby_server.c chuchu_common.c chuchu_sql.c chuchu_msg.c discord.c

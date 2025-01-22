@@ -1164,7 +1164,7 @@ void *chuchu_client_handler(void *data) {
   player_t *pl = (player_t *)data; 
   int sock = pl->sock;
   ssize_t read_size=0;
-  size_t write_size=0;
+  ssize_t write_size=0;
   int index=0, n_index=0;
   char c_msg[MAX_PKT_SIZE], s_msg[MAX_PKT_SIZE];
 
@@ -1201,7 +1201,7 @@ void *chuchu_client_handler(void *data) {
     while (read_size > 0) {
       if ((n_index = parse_chuchu_msg(&c_msg[index], (int)read_size)) > 0) {
 	//Handle msg, do some inital checks
-	write_size = (size_t)handle_chuchu_msg(pl, s_msg, &c_msg[index]);
+	write_size = (ssize_t)handle_chuchu_msg(pl, s_msg, &c_msg[index]);
 	if (write_size > 0)
 	  send_chuchu_crypt_msg(sock, &pl->server_cipher, s_msg, (int)write_size);
 	if (write_size < 0) {
