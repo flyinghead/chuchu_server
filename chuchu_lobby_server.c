@@ -23,8 +23,7 @@
 #include <stdlib.h>    
 #include <sys/socket.h>
 #include <arpa/inet.h> 
-#include <unistd.h>    
-#include <pthread.h>
+#include <unistd.h>
 #include "chuchu_common.h"
 #include "chuchu_sql.h"
 #include "chuchu_msg.h"
@@ -32,6 +31,14 @@
 uint16_t create_chuchu_game_menu(char* msg, game_room_t *gr);
 uint16_t create_chuchu_room_menu(server_data_t* s, char* msg, uint32_t menu_id, uint32_t item_id);
 void send_txt_to_all(server_data_t *s, char* username, int txt_flag);
+
+static void lock_server(server_data_t *server) {
+  pthread_mutex_lock(&server->mutex);
+}
+
+static void unlock_server(server_data_t *server) {
+  pthread_mutex_unlock(&server->mutex);
+}
 
 /*
  * Function: init_game_rooms
@@ -450,6 +457,7 @@ int add_player(server_data_t *s, player_t *pl) {
  */
 void delete_player(player_t *pl){
   server_data_t *s = pl->data;
+  lock_server(s);
   int max_clients = s->m_cli;
   char u_name[MAX_UNAME_LEN];
   int i=0;
@@ -474,7 +482,7 @@ void delete_player(player_t *pl){
       }
     }
   }
-  return;
+  unlock_server(s);
 }
 
 /*
@@ -1118,6 +1126,10 @@ int main(int argc , char *argv[]) {
   
   c = sizeof(struct sockaddr_in);
   pthread_t thread_id;
+  if (pthread_mutex_init(&s_data.mutex, NULL)) {
+	  perror("pthread_mutex_init");
+	  return 1;
+  }
   
   while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) ) {
     chuchu_info(LOBBY_SERVER,"Connection accepted from %s on socket %d", inet_ntoa(client.sin_addr), client_sock);
@@ -1126,7 +1138,10 @@ int main(int argc , char *argv[]) {
     pl->addr = client;
     pl->sock = client_sock;
     pl->client_id = (uint32_t)(client_sock + 0x0100);
-    if (!add_player(&s_data, pl)) {
+    lock_server(&s_data);
+    int success = add_player(&s_data, pl);
+    unlock_server(&s_data);
+    if (!success) {
 	free(pl);
 	return 0;
     }
@@ -1140,6 +1155,7 @@ int main(int argc , char *argv[]) {
     chuchu_info(LOBBY_SERVER,"Handler assigned");
     pthread_detach(thread_id);
   }
+  pthread_mutex_destroy(&s_data.mutex);
   if (client_sock < 0) {
     perror("Accept failed");
     return 1;
@@ -1200,8 +1216,10 @@ void *chuchu_client_handler(void *data) {
     n_index = 0;
     while (read_size > 0) {
       if ((n_index = parse_chuchu_msg(&c_msg[index], (int)read_size)) > 0) {
-	//Handle msg, do some inital checks
+    lock_server((server_data_t *)pl->data);
+	//Handle msg, do some initial checks
 	write_size = (ssize_t)handle_chuchu_msg(pl, s_msg, &c_msg[index]);
+    unlock_server((server_data_t *)pl->data);
 	if (write_size > 0)
 	  send_chuchu_crypt_msg(sock, &pl->server_cipher, s_msg, (int)write_size);
 	if (write_size < 0) {

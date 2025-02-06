@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #if defined(__BIG_ENDIAN__) || defined(WORDS_BIGENDIAN)
 #define LE16(x) (((x >> 8) & 0xFF) | ((x & 0xFF) << 8))
@@ -79,6 +80,7 @@ typedef struct {
   char chu_info_path[256];
   char discord_webhook[256];
   char deedee_server;
+  pthread_mutex_t mutex;
 
   //Data
   puzzle_t **puzz_l;

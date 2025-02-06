@@ -105,7 +105,7 @@ int is_player_in_chuchu_db(const char* db_path, const char* name_or_dc_id, int n
   if (count == 1)
     chuchu_info(SERVER,"Console ID/User '%s' is registered in the DB", name_or_dc_id);
   else
-    chuchu_info(SERVER,"Console ID/User '%' is not in the DB", name_or_dc_id);
+    chuchu_info(SERVER,"Console ID/User '%s' is not in the DB", name_or_dc_id);
 
   sqlite3_finalize(pStmt);
   sqlite3_close(db);

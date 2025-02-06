@@ -23,8 +23,7 @@
 #include <stdlib.h> 
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>   
-#include <pthread.h> 
+#include <unistd.h>
 #include "chuchu_common.h"
 #include "chuchu_sql.h"
 #include "chuchu_msg.h"
