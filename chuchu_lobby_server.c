@@ -29,7 +29,7 @@
 #include "chuchu_msg.h"
 
 uint16_t create_chuchu_game_menu(char* msg, game_room_t *gr);
-uint16_t create_chuchu_room_menu(server_data_t* s, char* msg, uint32_t menu_id, uint32_t item_id);
+uint16_t create_chuchu_room_menu(server_data_t* s, char* msg);
 void send_txt_to_all(server_data_t *s, char* username, int txt_flag);
 
 static void lock_server(server_data_t *server) {
@@ -61,7 +61,7 @@ void init_game_rooms(server_data_t *s) {
   for (int i = 0; i < nrooms; i++) {
     if (s->g_l[i] == NULL) { 
       game_room_t *gr = (game_room_t *)malloc(sizeof(game_room_t));
-      strlcpy(gr->g_name, r_menu[i], strlen(r_menu[i])+1);
+      strlcpy(gr->g_name, r_menu[i], sizeof(gr->g_name));
       gr->l_icon = TEAM_ICON;
       gr->r_icon = (uint8_t)r_icons[i];
       gr->menu_id = (uint32_t)GAME_MENU;
@@ -73,8 +73,6 @@ void init_game_rooms(server_data_t *s) {
       gr->duration = 0;
       gr->m_pl_slots = max_player_slots;
       gr->player_slots = calloc((size_t)max_player_slots, sizeof(player_t *));
-      for (int j=0;j<max_player_slots;j++)
-	gr->player_slots[j] = NULL;
       s->g_l[i] = gr;
     }
   }
@@ -128,7 +126,7 @@ void validate_game_room(game_room_t *gr, player_t *pl) {
 	gr->taken_seats--;
 	gr->player_slots[i] = NULL;
 	found = 1;
-      } else if (strncmp(pl->dreamcast_id, gr->player_slots[i]->dreamcast_id, 6) == 0) {
+      } else if (memcmp(pl->dreamcast_id, gr->player_slots[i]->dreamcast_id, 6) == 0) {
 	chuchu_info(LOBBY_SERVER,"Found a duplicate...remove");
 	gr->taken_seats--;
 	gr->player_slots[i] = NULL;
@@ -294,7 +292,7 @@ void check_after_old_game_rooms(server_data_t *s) {
  *           0 => FAILED
  */
 int create_game_room(server_data_t *s, const char* username, char* buf) {
-  int i=0, j=0, passwd_protected=0;
+  int i=0, passwd_protected=0;
   int max_player_slots = s->m_pl_slots;
   int max_rooms = s->m_rooms;
   char room_name[MAX_UNAME_LEN], room_password[MAX_PASSWD_LEN], msg[MAX_PKT_SIZE];
@@ -321,14 +319,14 @@ int create_game_room(server_data_t *s, const char* username, char* buf) {
   for(i=0;i<max_rooms;i++) {
     if (s->g_l[i] == NULL) {
       game_room_t *gr = (game_room_t *)malloc(sizeof(game_room_t));
-      strlcpy(gr->g_name, room_name, strlen(room_name)+1);
+      strlcpy(gr->g_name, room_name, sizeof(gr->g_name));
       
       if (passwd_protected) {
-	strlcpy(gr->g_passwd, room_password, strlen(room_password)+1);
+	strlcpy(gr->g_passwd, room_password, sizeof(gr->g_passwd));
       } else {
 	gr->g_passwd[0] = '\0';
       }
-      strlcpy(gr->creator, username, strlen(username)+1);
+      strlcpy(gr->creator, username, sizeof(gr->creator));
 
       gr->l_icon = TEAM_ICON;
       gr->r_icon = MICE_ICON;
@@ -340,13 +338,11 @@ int create_game_room(server_data_t *s, const char* username, char* buf) {
       gr->duration = (uint32_t)seconds;
       gr->m_pl_slots = max_player_slots;
       gr->player_slots = calloc((size_t)max_player_slots, sizeof(player_t *));
-      for (j=0;j<max_player_slots;j++)
-	gr->player_slots[j] = NULL;
       s->g_l[i] = gr;
 
       //Rebuild room menu
       memset(msg,0,sizeof(msg));
-      create_chuchu_room_menu(s, msg, gr->menu_id, gr->item_id);
+      create_chuchu_room_menu(s, msg);
       chuchu_info(LOBBY_SERVER,"User %s created game room %s",username,room_name);
       return 1;
     }
@@ -375,7 +371,7 @@ void if_session_exists(server_data_t *s, player_t *pl) {
   for(i=0;i<max_clients;i++) {
     if (s->p_l[i] != NULL && s->p_l[i] != pl) {
       if (s->p_l[i]->authorized == 1) {
-	if(strncmp(pl->dreamcast_id, s->p_l[i]->dreamcast_id, 6) == 0) {
+	if(memcmp(pl->dreamcast_id, s->p_l[i]->dreamcast_id, 6) == 0) {
 	  chuchu_info(LOBBY_SERVER,"Found a old session for %s", pl->username);
 	  //Set so the old sessions doesn't store in the DB
 	  s->p_l[i]->store_ranking = 0;
@@ -470,7 +466,7 @@ void delete_player(player_t *pl){
     } 
     leave_game_room(pl, pl->menu_id, pl->item_id);
     memset(u_name, 0, sizeof(u_name));
-    strlcpy(u_name, pl->username, strlen(pl->username)+1);
+    strlcpy(u_name, pl->username, sizeof(u_name));
     send_txt_to_all(s, u_name, LEAVE_SERVER);
   }
 
@@ -510,7 +506,7 @@ uint16_t create_chuchu_menu_item(char *msg, int c_pkt_size, uint32_t item_id, ME
   msg[c_pkt_size] = menu_icon_left;
   msg[c_pkt_size + 1] = menu_icon_right;
 
-  strlcpy(&msg[c_pkt_size + 2], item_str, strlen(item_str)+1);
+  strcpy(&msg[c_pkt_size + 2], item_str);
   
   //index c_pkt_size + 19 sets different types of rooms, for example if it requires a password.
   if (menu_icon_left == CREATE_TEAM_ICON) {
@@ -567,13 +563,11 @@ uint16_t create_chuchu_server_menu(server_data_t* s, char* msg) {
  *
  *  *s:   ptr to server data struct
  *  *msg: ptr to outgoing client msg
- *  menu_id: Id of the menu
- *  item_id: Id of the item
  *
  *  returns: packet size
  *           
  */
-uint16_t create_chuchu_room_menu(server_data_t* s, char* msg, uint32_t menu_id, uint32_t item_id) {
+uint16_t create_chuchu_room_menu(server_data_t* s, char* msg) {
   uint16_t pkt_size=4;
   int i=0,entries=0;
   int max_rooms = s->m_rooms;
@@ -760,7 +754,7 @@ uint16_t create_chuchu_menu_msg(player_t *pl, uint32_t menu_id, uint32_t item_id
   case ROOM_MENU:
     if(item_id == 0xee)
       leave_game_room(pl, prev_menu_id, prev_item_id);
-    return create_chuchu_room_menu(s, msg, menu_id, item_id);
+    return create_chuchu_room_menu(s, msg);
   case GAME_MENU:
     if (item_id == 0xff) {
       gr = get_room_from_item_id(s, prev_item_id);
@@ -877,7 +871,7 @@ void send_txt_to_all(server_data_t *s, char* username, int txt_flag) {
   default:
     return;
   }
-  strlcpy(&msg[pkt_size], chat_msg, strlen(chat_msg)+1);
+  strcpy(&msg[pkt_size], chat_msg);
 
   pkt_size = (uint16_t)(pkt_size + strlen(chat_msg));
   //Padding
@@ -937,7 +931,7 @@ int handle_chuchu_msg(player_t *pl, char* msg, char* buf) {
       //Print this for the first packet
       if (strcmp(pl->username, username) != 0) {
 	chuchu_info(LOBBY_SERVER," <- Username: %s is trying to join...", username);
-	strlcpy(pl->username, username, strlen(username)+1);
+	strlcpy(pl->username, username, sizeof(pl->username));
 	memcpy(pl->dreamcast_id, &buf[0x06], 6);
 
 	//Get stats/ranking aswell
@@ -985,6 +979,7 @@ int handle_chuchu_msg(player_t *pl, char* msg, char* buf) {
 	if(create_game_room(s,pl->username, buf)) {
 	  //Game room created
 	  pl->created_game_room = 1;
+	  // TODD This seems to confuse the creator of the room in some cases?
 	  send_txt_to_all(s, pl->username, NEW_GAME_ROOM);
 	  return 0;
 	} else {

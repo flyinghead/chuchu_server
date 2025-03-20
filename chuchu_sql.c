@@ -338,8 +338,8 @@ int load_puzzles_to_array(server_data_t *s) {
   while (sqlite3_step(pStmt) == SQLITE_ROW ) {
     puzzle_t *puz = (puzzle_t *)calloc(1, sizeof(puzzle_t));
     puz->id = (uint32_t)sqlite3_column_int(pStmt, 0);
-    strlcpy(puz->p_name, (char*)sqlite3_column_text(pStmt,1), (size_t)sqlite3_column_bytes(pStmt, 1)+1);
-    strlcpy(puz->u_name, (char*)sqlite3_column_text(pStmt,2), (size_t)sqlite3_column_bytes(pStmt, 2)+1);
+    strlcpy(puz->p_name, (char *)sqlite3_column_text(pStmt, 1), sizeof(puz->p_name));
+    strlcpy(puz->u_name, (char *)sqlite3_column_text(pStmt, 2), sizeof(puz->u_name));
     puz->dl = (uint16_t)sqlite3_column_int(pStmt, 3);
     //Should not happen
     assert(s->puzz_l[index] == NULL);
@@ -496,8 +496,8 @@ int write_puzzle_in_chuchu_db(server_data_t *s, const char* p_name, const char* 
   puzzle_t *puz = (puzzle_t *)calloc(1, sizeof(puzzle_t));
   puz->id = (uint32_t)lastid;
   puz->dl = 0;
-  strlcpy(puz->p_name, p_name, strlen(p_name)+1);
-  strlcpy(puz->u_name, u_name, strlen(u_name)+1);
+  strlcpy(puz->p_name, p_name, sizeof(puz->p_name));
+  strlcpy(puz->u_name, u_name, sizeof(puz->u_name));
   //Should not happen
   assert(s->puzz_l[lastid] == NULL);
   s->puzz_l[lastid] = puz;
@@ -566,7 +566,7 @@ int read_puzzle_in_chuchu_db(server_data_t *s, const char* db_path, char* msg, u
     return 0;
   }
   //Add puzzle_name and blob to msg
-  strlcpy(msg, p_name, strlen(p_name)+1); 
+  strlcpy(msg, p_name, 0x10);
   memcpy(&msg[0x10], puzBlob, (size_t)pnBlob);
   
   sqlite3_finalize(pStmt);
@@ -876,7 +876,7 @@ int read_top_ranking_from_chuchu_db(char* msg, const char* db_path) {
   while (1) {
     rc = sqlite3_step(pStmt);
     if(rc == SQLITE_ROW) {
-      strlcpy(u_name, (char*)sqlite3_column_text(pStmt,0), (size_t)sqlite3_column_bytes(pStmt, 0)+1);
+      strlcpy(u_name, (char*)sqlite3_column_text(pStmt,0), sizeof(u_name));
       won_rnds = (uint32_t)sqlite3_column_int(pStmt, 1);
       lost_rnds = (uint32_t)sqlite3_column_int(pStmt, 2);
       total_rnds = (uint32_t)sqlite3_column_int(pStmt, 3);

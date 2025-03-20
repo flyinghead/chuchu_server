@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <pthread.h>
+#include <time.h>
 
 struct Notif
 {
@@ -150,6 +151,13 @@ static void postWebhook(server_data_t *server, Notif *notif)
 
 void discordRoomJoined(server_data_t *server, const char *player, const char *room)
 {
+	// Not thread safe but the worst that can happen is 2 notifications at the same time
+	static time_t last_notif;
+	time_t now = time(NULL);
+	if (last_notif != 0 && now - last_notif < 5 * 60)
+		// No more than one notification every 5 min
+		return;
+	last_notif = now;
 	Notif *notif = (Notif *)calloc(1, sizeof(Notif));
 	char content[128];
 	sprintf(content, "Player **%s** joined room **%s**", player, room);

@@ -69,7 +69,7 @@ uint16_t create_chuchu_notify_msg(char *msg, int msg_id) {
     notify_msg = "Already created a game room\nfor this session";
     break; 
   }
-  strlcpy(&msg[pkt_size], notify_msg, strlen(notify_msg)+1);
+  strcpy(&msg[pkt_size], notify_msg);
   pkt_size = (uint16_t)(pkt_size + strlen(notify_msg));
   //Padding
   pkt_size = (uint16_t)(pkt_size + 4);
@@ -105,7 +105,7 @@ uint16_t create_chuchu_copyright_msg(player_t *pl, char * msg, uint8_t server_ty
     copyright = "DreamCast Lobby Server. Copyright SEGA Enterprises. 1999";
   }
   
-  strlcpy(&msg[4], copyright, strlen(copyright)+1);
+  strlcpy(&msg[4], copyright, 64);
 
   server_vector = htonl(pl->server_seed);
   client_vector = htonl(pl->client_seed);
@@ -200,7 +200,7 @@ uint16_t create_chuchu_chat_msg(player_t *pl, char* buf, char* msg) {
   }
 
   //Get username from the user that sent the msg
-  strlcpy(snd_username, pl->username, strlen(pl->username)+1);
+  strlcpy(snd_username, pl->username, sizeof(snd_username));
   
   //Lobby chat, goes to all
   if (item_id == 0x00) {
@@ -210,7 +210,7 @@ uint16_t create_chuchu_chat_msg(player_t *pl, char* buf, char* msg) {
     
     sprintf(tmp_chat_msg, "[%s]:\t", snd_username);
     strncat(tmp_chat_msg, &buf[12], str_len);
-    strlcpy(&msg[pkt_size], tmp_chat_msg, strlen(tmp_chat_msg)+1);
+    strcpy(&msg[pkt_size], tmp_chat_msg);
     pkt_size = (uint16_t)(pkt_size + strlen(tmp_chat_msg));
     
     //Padding
@@ -233,7 +233,7 @@ uint16_t create_chuchu_chat_msg(player_t *pl, char* buf, char* msg) {
 	//Create whisper to user msg
 	snprintf(tmp_chat_msg, sizeof(tmp_chat_msg), "Message from '%s'\n\n", snd_username);
 	strncat(tmp_chat_msg, &buf[12], str_len);
-	strlcpy(&msg[4], tmp_chat_msg, strlen(tmp_chat_msg)+1);
+	strcpy(&msg[4], tmp_chat_msg);
 	pkt_size = (uint16_t)(4 + strlen(tmp_chat_msg));
 	//Padding
 	pkt_size = (uint16_t)(pkt_size + 4);
@@ -370,7 +370,7 @@ uint16_t create_chuchu_add_info(server_data_t *s, char* msg, uint32_t menu_id, u
 		(s->p_l[i]->total_rnds + s->p_l[i]->db_total_rnds),
 		 s->p_l[i]->controllers
 	  );
-	strlcpy(&msg[pkt_size], box_text, strlen(box_text)+1);
+	strcpy(&msg[pkt_size], box_text);
 	pkt_size = (uint16_t)(pkt_size + strlen(box_text));
 	//Padding
 	pkt_size = (uint16_t)(pkt_size + 4);
@@ -393,18 +393,18 @@ uint16_t create_chuchu_add_info(server_data_t *s, char* msg, uint32_t menu_id, u
     if (gr == NULL)
       return 0;
     sprintf(box_text, "%d of 4\nusers in the room\nCreated by\n%s", gr->taken_seats,gr->creator);
-    strlcpy(&msg[pkt_size], box_text, strlen(box_text)+1);
+    strcpy(&msg[pkt_size], box_text);
     break;      
   case PUZZLE_ZONE_MENU:
     sprintf(box_text, "Press X to\nsee the puzzle creator");
-    strlcpy(&msg[pkt_size], box_text, strlen(box_text)+1);
+    strcpy(&msg[pkt_size], box_text);
     break;
   case PUZZLE_ZONE_FILE:
     for (i=0;i<max_puzzles;i++) {
       if (s->puzz_l[i] != NULL) {
 	if (s->puzz_l[i]->id == item_id) {
 	  sprintf(box_text, "Created by\n%s\nDownloaded:\n%d", s->puzz_l[i]->u_name, s->puzz_l[i]->dl);
-	  strlcpy(&msg[pkt_size], box_text, strlen(box_text)+1);
+	  strcpy(&msg[pkt_size], box_text);
 	  break;
 	}
       }
@@ -413,7 +413,7 @@ uint16_t create_chuchu_add_info(server_data_t *s, char* msg, uint32_t menu_id, u
   default:
     //Check if 
     sprintf(box_text, "No additional\ninfo");
-    strlcpy(&msg[pkt_size], box_text, strlen(box_text)+1);
+    strcpy(&msg[pkt_size], box_text);
     break;
   }
   
