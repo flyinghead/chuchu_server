@@ -38,7 +38,7 @@
  */
 uint16_t create_chuchu_notify_msg(char *msg, int msg_id) {
   uint16_t pkt_size = 12;
-  const char *notify_msg;
+  const char *notify_msg = "?";
 
   switch(msg_id) {
   case 0x01:

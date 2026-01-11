@@ -1,2 +1,6 @@
 /chuchu_login_server
 /chuchu_lobby_server
+/.cproject
+/.gdb_history
+/.project
+/*.o

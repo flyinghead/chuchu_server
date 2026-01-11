@@ -24,6 +24,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h> 
 #include <unistd.h>
+#ifdef DCNET
+#include <dcserver/status.h>
+#endif
 #include "chuchu_common.h"
 #include "chuchu_sql.h"
 #include "chuchu_msg.h"
@@ -226,7 +229,9 @@ void join_game_room(player_t *pl, game_room_t *gr) {
       chuchu_info(LOBBY_SERVER,"User %s joined room %s", pl->username, gr->g_name); 
       gr->player_slots[i] = pl;
       gr->taken_seats++;
+#ifdef DCNET
       discordRoomJoined(s, pl->username, gr->g_name);
+#endif
       return;
     }
   }
@@ -769,7 +774,9 @@ uint16_t create_chuchu_menu_msg(player_t *pl, uint32_t menu_id, uint32_t item_id
 	return 0;
       }
       //Start the game
+#ifdef DCNET
       discordGameStart(gr);
+#endif
       return create_chuchu_start_game_msg(gr);
     } 
     //Else a player is joing a game room
@@ -1079,6 +1086,27 @@ int handle_chuchu_msg(player_t *pl, char* msg, char* buf) {
   return msg_size;
 }
 
+#ifdef DCNET
+void *status_update_thread(void *p)
+{
+	server_data_t *server = (server_data_t *)p;
+	int playerCount = 0;
+	for (;;)
+	{
+		for (int i = 0; i < server->m_cli; i++) {
+			if (server->p_l[i] != NULL)
+				playerCount++;
+		}
+		const char *game_id = server->deedee_server ? "deedee" : "chuchu";
+		// TODO how to count games?
+		statusUpdate(game_id, playerCount, 0);
+		statusCommit(game_id);
+		sleep((unsigned)statusGetInterval());
+	}
+	return NULL;
+}
+#endif
+
 int main(int argc , char *argv[]) {
   int socket_desc , client_sock , c, optval;
   struct sockaddr_in server , client;
@@ -1125,7 +1153,13 @@ int main(int argc , char *argv[]) {
 	  perror("pthread_mutex_init");
 	  return 1;
   }
-  
+#ifdef DCNET
+  if (pthread_create(&thread_id, NULL, status_update_thread, &s_data) < 0)
+    perror("Could not create status update thread");
+  else
+    pthread_detach(thread_id);
+#endif
+
   while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) ) {
     chuchu_info(LOBBY_SERVER,"Connection accepted from %s on socket %d", inet_ntoa(client.sin_addr), client_sock);
     //Store player data

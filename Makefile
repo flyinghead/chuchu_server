@@ -1,31 +1,44 @@
-CC = gcc
-#CFLAGS = -DDISABLE_AUTH -Wall -Wconversion -g -fsanitize=address
-CFLAGS = -DDISABLE_AUTH -Wall -O3
-LFLAGS = -lpthread -lsqlite3 -lcurl $(CFLAGS)
+#
+# dependencies: libsqlite3-dev libdcserver
+#
+#CFLAGS = -Wall -Wconversion -g -fsanitize=address
+CFLAGS = -Wall -O3
+LDFLAGS = -lpthread -lsqlite3
 TARGET = chuchu_login_server chuchu_lobby_server
-LOGIN_SRC = chuchu_login_server.c chuchu_common.c chuchu_sql.c chuchu_msg.c
-LOBBY_SRC = chuchu_lobby_server.c chuchu_common.c chuchu_sql.c chuchu_msg.c discord.c
-COMMON_SRC = chuchu_common.c chuchu_sql.c chuchu_msg.c chuchu_common.h chuchu_sql.h chuchu_msg.h
-USER = dcnet
+HEADERS = chuchu_common.h chuchu_sql.h chuchu_msg.h
+LOGIN_OBJ = chuchu_login_server.o
+LOBBY_OBJ = chuchu_lobby_server.o
+COMMON_OBJ = chuchu_common.o chuchu_sql.o chuchu_msg.o
+USER = chuchu
 INSTALL_DIR = /usr/local/chuchu
+DCNET = 1
+
+ifeq ($(DCNET),1)
+  LDFLAGS := $(LDFLAGS) -ldcserver -Wl,-rpath,/usr/local/lib
+  CFLAGS := $(CFLAGS) -DDISABLE_AUTH -DDCNET
+  USER := dcnet
+  LOBBY_OBJ := $(LOBBY_OBJ) discord.o
+endif
 
 all: $(TARGET)
 
-chuchu_login_server: $(LOGIN_SRC) $(COMMON_SRC)
-	$(CC) $(CFLAGS) $(LOGIN_SRC) -o $@ $(LFLAGS)
-chuchu_lobby_server: $(LOBBY_SRC) $(COMMON_SRC)
-	$(CC) $(CFLAGS) $(LOBBY_SRC) -o $@ $(LFLAGS)
+%.o: %.c $(HEADERS) Makefile
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+chuchu_login_server: $(LOGIN_OBJ) $(COMMON_OBJ)
+	$(CC) $(CFLAGS) $(LOGIN_OBJ) $(COMMON_OBJ) -o $@ $(LDFLAGS)
+chuchu_lobby_server: $(LOBBY_OBJ) $(COMMON_OBJ)
+	$(CC) $(CFLAGS) $(LOBBY_OBJ) $(COMMON_OBJ) -o $@ $(LDFLAGS)
 clean:
-	rm -f $(TARGET) *.o
-	rm -f *~
+	rm -f $(TARGET) *.o *~
 
 install:
 	install -o $(USER) -g $(USER) -d $(INSTALL_DIR)
-	install -o $(USER) -g $(USER) chuchu_login_server chuchu_lobby_server $(INSTALL_DIR)
+	install chuchu_login_server chuchu_lobby_server $(INSTALL_DIR)
 
 
 installservice:
-	cp chuchu_login@.service chuchu_lobby@.service /lib/systemd/system/
+	cp chuchu_login@.service chuchu_lobby@.service /usr/lib/systemd/system/
 	systemctl daemon-reload
 	systemctl enable chuchu_login@chuchu.service
 	systemctl enable chuchu_login@deedee.service
