@@ -1090,9 +1090,9 @@ int handle_chuchu_msg(player_t *pl, char* msg, char* buf) {
 void *status_update_thread(void *p)
 {
 	server_data_t *server = (server_data_t *)p;
-	int playerCount = 0;
 	for (;;)
 	{
+		int playerCount = 0;
 		for (int i = 0; i < server->m_cli; i++) {
 			if (server->p_l[i] != NULL)
 				playerCount++;
