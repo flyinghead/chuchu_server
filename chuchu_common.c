@@ -68,7 +68,7 @@ void chuchu_error(SERVER_TYPE type, const char* format, ... ) {
   
   memset(td_str, 0, sizeof(td_str));
   snprintf(td_str, sizeof(td_str), "[%04d/%02d/%02d %02d:%02d:%02d]", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-  fprintf(stdout,"%s",td_str);
+  fprintf(stderr,"%s",td_str);
 
   if (type == LOGIN_SERVER)
     s_str = "[ChuChu - LoginServer] [ERROR] - ";
@@ -77,11 +77,11 @@ void chuchu_error(SERVER_TYPE type, const char* format, ... ) {
   else
     s_str = "[ChuChu - Server] [ERROR] - ";
   
-  fprintf(stdout,"%s",s_str);
+  fprintf(stderr,"%s",s_str);
   va_start(args,format);
-  vfprintf(stdout,format,args);
+  vfprintf(stderr,format,args);
   va_end(args);
-  fprintf(stdout,"\n");
+  fprintf(stderr,"\n");
 }
 
 void chuchu_info(SERVER_TYPE type, const char* format, ... ) {
@@ -93,7 +93,7 @@ void chuchu_info(SERVER_TYPE type, const char* format, ... ) {
 
   memset(td_str, 0, sizeof(td_str));
   snprintf(td_str, sizeof(td_str), "[%04d/%02d/%02d %02d:%02d:%02d]", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-  fprintf(stdout,"%s",td_str);
+  fprintf(stderr,"%s",td_str);
   
   if (type == LOGIN_SERVER)
     s_str = "[ChuChu - LoginServer] [INFO] - ";
@@ -102,12 +102,11 @@ void chuchu_info(SERVER_TYPE type, const char* format, ... ) {
   else
     s_str = "[ChuChu - Server] [INFO] - "; 
 
-  fprintf(stdout,"%s",s_str);
+  fprintf(stderr,"%s",s_str);
   va_start(args,format);
-  vfprintf(stdout,format,args);
+  vfprintf(stderr,format,args);
   va_end(args);
-  fprintf(stdout,"\n");
-  fflush(stdout);
+  fprintf(stderr,"\n");
 }
 
 void print_all_game_rooms(server_data_t *s) {

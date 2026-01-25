@@ -7,9 +7,9 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-User=dcnet
-WorkingDirectory=/usr/local/chuchu
-ExecStart=/usr/local/chuchu/chuchu_lobby_server %i.cfg
+User=INSTALL_USER
+ExecStart=SBINDIR/chuchu_lobby_server SYSCONFDIR/%i.cfg
+StandardOutput=append:LOCALSTATEDIR/log/%i-lobby.log
 
 [Install]
 WantedBy=multi-user.target

@@ -288,17 +288,14 @@ void *chuchu_client_handler(void *data) {
       memset(s_msg, 0, sizeof(s_msg)); 
     }
     memset(c_msg, 0, sizeof(c_msg));
-    fflush(stdout);
   }
   
   if(read_size == 0) {
     chuchu_info(LOGIN_SERVER,"Client with socket %d [%s] disconnected", sock, inet_ntoa(pl->addr.sin_addr));
     close(sock);
-    fflush(stdout);
   } else if(read_size == -1) {
     chuchu_info(LOGIN_SERVER,"recv failed");
     close(sock);
-    fflush(stdout);
   }
   
   free(pl);
