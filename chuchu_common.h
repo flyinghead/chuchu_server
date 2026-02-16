@@ -182,7 +182,8 @@ void decrypt_chuchu_msg(CRYPT_SETUP *cp, char *msg, unsigned long msg_size);
 void send_chuchu_crypt_msg(int sock, CRYPT_SETUP *sp, char* msg, int msg_size);
 
 //Help
-uint32_t strlcpy(char *dst, const char *src, size_t size);
+#define strlcpy my_strlcpy
+uint32_t my_strlcpy(char *dst, const char *src, size_t size);
 uint32_t char_to_uint32(char* data);
 uint16_t char_to_uint16(char* data);
 int uint32_to_char(uint32_t data, char* msg);
