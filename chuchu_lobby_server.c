@@ -474,6 +474,10 @@ void delete_player(player_t *pl){
     strlcpy(u_name, pl->username, sizeof(u_name));
     send_txt_to_all(s, u_name, LEAVE_SERVER);
   }
+#ifdef DCNET
+  if (pl->authorized == 1)
+      statusLeave(s->deedee_server ? "deedee" : "chuchu", inet_ntoa(pl->addr.sin_addr), ntohs(pl->addr.sin_port), pl->username);
+#endif
 
   for(i=0;i<max_clients;i++) {
     if (s->p_l[i] != NULL) {
@@ -966,6 +970,9 @@ int handle_chuchu_msg(player_t *pl, char* msg, char* buf) {
       memcpy(&msg[0x04], &buf[0x06], 6);
       msg_size = create_chuchu_resent_login_request_msg(msg, 0x00, 12); 
       msg_size = (uint16_t)(msg_size + create_chuchu_menu_msg(pl, SERVER_MENU, 0x00, &msg[msg_size])); 
+#ifdef DCNET
+      statusJoin(s->deedee_server ? "deedee" : "chuchu", inet_ntoa(pl->addr.sin_addr), ntohs(pl->addr.sin_port), username);
+#endif
     } else {
       chuchu_error(LOBBY_SERVER,"RESENT LOGIN REQUEST MSG is corrupt");
       return -1;
@@ -1090,18 +1097,11 @@ int handle_chuchu_msg(player_t *pl, char* msg, char* buf) {
 void *status_update_thread(void *p)
 {
 	server_data_t *server = (server_data_t *)p;
-	for (;;)
-	{
-		int playerCount = 0;
-		for (int i = 0; i < server->m_cli; i++) {
-			if (server->p_l[i] != NULL)
-				playerCount++;
-		}
-		const char *game_id = server->deedee_server ? "deedee" : "chuchu";
-		// TODO how to count games?
-		statusUpdate(game_id, playerCount, -1);
-		statusCommit(game_id);
-		sleep((unsigned)statusGetInterval());
+	const char *game_id = server->deedee_server ? "deedee" : "chuchu";
+	statusReset(game_id);
+	for (;;) {
+		sleep((unsigned)statusPingInterval());
+		statusPing(game_id);
 	}
 	return NULL;
 }
